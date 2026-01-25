@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart, Star, Loader2, ShoppingBag, Award } from 'lucide-react';
 import { AppContext, formatCurrency, SiteLoader } from '../shared';
 import { getDB } from '../db';
+import { Product } from '../types';
+import { ExpandableProductCard } from '../components/ExpandableProductCard';
 
 const BrandPage: React.FC = () => {
   const { brand } = useParams<{ brand: string }>();
@@ -49,8 +51,8 @@ const BrandPage: React.FC = () => {
     <div className="min-h-screen bg-white">
       {/* Dynamic Background */}
       <div className="fixed inset-0 pointer-events-none -z-10">
-        <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4"></div>
-        <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-slate-100 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/4"></div>
+        <div className="hidden md:block absolute top-0 right-0 w-[40rem] h-[40rem] bg-indigo-50/50 rounded-full blur-[100px] -translate-y-1/2 translate-x-1/4" aria-hidden></div>
+        <div className="hidden md:block absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-slate-100 rounded-full blur-[80px] translate-y-1/2 -translate-x-1/4" aria-hidden></div>
       </div>
 
       {/* Hero Section */}
@@ -66,7 +68,7 @@ const BrandPage: React.FC = () => {
           <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-8">
             <div className="max-w-2xl">
               <div className="inline-flex items-center gap-2 px-3 py-1 bg-slate-900 text-white rounded-full mb-6">
-                < Award size={14} className="text-amber-400" />
+                <Award size={14} className="text-amber-400" />
                 <span className="text-[10px] font-black uppercase tracking-widest">Certified Partner</span>
               </div>
               <h1 className="text-5xl md:text-7xl font-black text-slate-900 tracking-tighter leading-none mb-6">
@@ -78,7 +80,7 @@ const BrandPage: React.FC = () => {
               </p>
             </div>
             
-            <div className="flex gap-8 border-l border-slate-200 pl-8 hidden md:flex">
+            <div className="hidden md:flex gap-8 border-l border-slate-200 pl-8">
               <div>
                 <p className="text-3xl font-black text-slate-900 line-height-1">{products.length}</p>
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Items</p>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useContext } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { ExpandableProductCard } from '../components/ExpandableProductCard';
-import { ArrowRight, Smartphone, Watch, Laptop, ShoppingBag, Zap, MessageSquare, Shirt, Baby, Clock, Loader2, Star, TrendingUp, Sparkles, Truck, ShieldCheck, Apple, HelpCircle, ChevronRight, Users, Award, Gift, Zap as ZapIcon, Mail, Flame, Eye, Heart as HeartIcon, TrendingUp as TrendingIcon, Zap as ZapCheckIcon, CheckCircle2, Headphones, RotateCcw, X, Lock, User } from 'lucide-react';
+import { ArrowRight, Smartphone, Watch, Laptop, ShoppingBag, Zap, MessageSquare, Shirt, Baby, Clock, Loader2, Star, TrendingUp, Sparkles, Truck, ShieldCheck, Apple, HelpCircle, ChevronRight, ChevronLeft, Users, Award, Gift, Zap as ZapIcon, Mail, Flame, Eye, Heart as HeartIcon, TrendingUp as TrendingIcon, Zap as ZapCheckIcon, CheckCircle2, Headphones, RotateCcw, X, Lock, User, Palette } from 'lucide-react';
 import { ProductCategory, Product } from '../types';
 import { AppContext } from '../shared';
 import { api } from '../services/api';
@@ -50,28 +50,34 @@ const CategoryCard = ({ icon: Icon, title, color, desc }: any) => {
   return (
     <Link 
       to={`/shop?category=${encodeURIComponent(title)}`}
-      className={`group relative flex flex-col items-center p-5 md:p-8 bg-gradient-to-br ${getCategoryBgGradient(title)} backdrop-blur-md rounded-2xl md:rounded-[2rem] border-2 shadow-lg hover:shadow-2xl hover:shadow-current/20 transition-all duration-300 hover:-translate-y-2 overflow-hidden`}
+      className={`group relative flex flex-col items-center p-4 sm:p-5 md:p-8 bg-gradient-to-br ${getCategoryBgGradient(title)} backdrop-blur-md rounded-2xl md:rounded-[2rem] border-2 shadow-lg hover:shadow-2xl hover:shadow-current/20 transition-all duration-300 hover:-translate-y-2 overflow-hidden`}
     >
-      <div className={`mb-4 md:mb-6 transition-all duration-300 group-hover:scale-110 ${color.replace('bg-', 'text-')}`}>
-        <Icon size={48} className="md:w-12 md:h-12" />
+      <div className={`mb-3 sm:mb-4 md:mb-6 transition-all duration-300 group-hover:scale-110 ${color.replace('bg-', 'text-')}`}>
+        <Icon size={36} className="sm:w-10 sm:h-10 md:w-12 md:h-12" />
       </div>
-      <h3 className="text-base md:text-lg font-bold text-gray-900 group-hover:text-gray-800 transition-colors text-center leading-snug flex items-center justify-center gap-2">
+      <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 group-hover:text-gray-800 transition-colors text-center leading-snug flex items-center justify-center gap-2">
         {title}
-        {(title === "Women's Wear" || title === "Women's Watches") && (
-          <img 
-            src="https://cdn-icons-png.flaticon.com/128/8863/8863863.png" 
-            alt="Women's Icon" 
-            className="w-5 h-5 md:w-6 md:h-6 object-contain womens-icon-animated"
-          />
-        )}
-        {title === "Grocery" && (
-          <img 
-            src="https://cdn-icons-png.flaticon.com/128/3514/3514211.png" 
-            alt="Grocery Icon" 
-            className="w-5 h-5 md:w-6 md:h-6 object-contain collection-icon-animated"
-          />
-        )}
       </h3>
+
+      {/* Beauty animated decorative background (purely presentational) */}
+      {title === ProductCategory.BEAUTY && (
+        <div aria-hidden className="absolute inset-0 pointer-events-none beauty-animated-decor">
+          <svg className="beauty-blob" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice" focusable="false" role="img">
+            <defs>
+              <linearGradient id="bbGrad" x1="0%" x2="100%">
+                <stop offset="0%" stopColor="#fde68a" stopOpacity="0.08" />
+                <stop offset="40%" stopColor="#fbcfe8" stopOpacity="0.12" />
+                <stop offset="100%" stopColor="#f0abfc" stopOpacity="0.10" />
+              </linearGradient>
+            </defs>
+            <g transform="translate(300,300)">
+              <path className="blob-path" d="M120 -160C164 -130 201 -84 213 -28C224 28 210 94 174 137C138 180 80 200 23 191C-34 182 -68 144 -106 105C-144 66 -186 26 -193 -32C-200 -90 -172 -158 -118 -189C-63 -220 17 -213 72 -187C127 -161 76 -190 120 -160Z" fill="url(#bbGrad)" />
+            </g>
+          </svg>
+          <div className="beauty-sparkles" />
+        </div>
+      )}
+
       <p className="text-gray-600 mt-2 md:mt-3 text-xs md:text-sm text-center leading-relaxed px-2">{desc}</p>
       <div className="mt-4 md:mt-6 flex items-center gap-1 text-[8px] md:text-[9px] font-semibold text-gray-700 opacity-0 group-hover:opacity-100 transition-all">
         Explore <ArrowRight size={12} className="group-hover:translate-x-0.5" />
@@ -93,6 +99,33 @@ const HomePage: React.FC = () => {
   const context = useContext(AppContext);
   const { setBgCategory } = context!;
   const [flashDeals, setFlashDeals] = useState<Product[]>([]);
+
+  // Newsletter state + handler (was missing — caused runtime error)
+  const [newsletterEmail, setNewsletterEmail] = useState('');
+  const [newsletterLoading, setNewsletterLoading] = useState(false);
+  const [newsletterMessage, setNewsletterMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  const handleSubscribe = async (e?: React.FormEvent) => {
+    if (e && typeof e.preventDefault === 'function') e.preventDefault();
+    const email = newsletterEmail.trim();
+    const emailRx = /^\S+@\S+\.\S+$/;
+    if (!emailRx.test(email)) {
+      setNewsletterMessage({ type: 'error', text: 'Please enter a valid email address.' });
+      return;
+    }
+
+    try {
+      setNewsletterLoading(true);
+      await api.subscribe(email);
+      setNewsletterMessage({ type: 'success', text: "You're subscribed — check your inbox!" });
+      setNewsletterEmail('');
+    } catch (err: any) {
+      setNewsletterMessage({ type: 'error', text: err?.message || 'Subscription failed. Please try again.' });
+    } finally {
+      setNewsletterLoading(false);
+      window.setTimeout(() => setNewsletterMessage(null), 4500);
+    }
+  };
 
   useEffect(() => {
     setBgCategory('General');
@@ -121,6 +154,158 @@ const HomePage: React.FC = () => {
     return () => clearInterval(timer);
   }, [heroImages.length]);
 
+  // --- Testimonials carousel data & controls ---
+  const testimonials = [
+    { name: "Priya Singh", role: "Fashion Enthusiast", image: "https://i.pravatar.cc/150?img=1", text: "ClickBazaar's collection is absolutely stunning! The quality is premium and delivery was faster than expected." },
+    { name: "Rajesh Kumar", role: "Tech Lover", image: "https://i.pravatar.cc/150?img=2", text: "Best place for electronics. Great prices, authentic products, and excellent after-sales support." },
+    { name: "Ananya Patel", role: "Home Decor Expert", image: "https://i.pravatar.cc/150?img=3", text: "The curated home collection transformed my space. Love the attention to detail and customer service." },
+    { name: "Sahil Verma", role: "Frequent Buyer", image: "https://i.pravatar.cc/150?img=4", text: "Checkout was seamless and support helped me pick the perfect size. Highly recommend." },
+    { name: "Meera Joshi", role: "Gift Shopper", image: "https://i.pravatar.cc/150?img=5", text: "Beautiful gift-wrap options and the recipient loved the present — five stars for presentation." },
+    { name: "Arjun Rao", role: "Gadget Reviewer", image: "https://i.pravatar.cc/150?img=6", text: "Authentic specs and honest listings. Received exactly what was described." },
+    { name: "Ritika Sen", role: "Interior Stylist", image: "https://i.pravatar.cc/150?img=7", text: "Quality home decor that doesn't break the bank — curated and stylish." }
+  ];
+
+  const testimonialsRef = React.useRef<HTMLDivElement | null>(null);
+  const autoplayRef = React.useRef<number | null>(null);
+  const isPausedRef = React.useRef(false);
+  const [activeTestIndex, setActiveTestIndex] = useState(0);
+
+  // update active index based on scroll position (keeps indicators in sync)
+  useEffect(() => {
+    const el = testimonialsRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const children = Array.from(el.children) as HTMLElement[];
+      const center = el.scrollLeft + el.clientWidth / 2;
+      // find the child whose center is closest to container center
+      let closestIdx = 0;
+      let closestDist = Infinity;
+      children.forEach((c, i) => {
+        const cCenter = c.offsetLeft + c.offsetWidth / 2;
+        const dist = Math.abs(cCenter - center);
+        if (dist < closestDist) { closestDist = dist; closestIdx = i; }
+      });
+      if (closestIdx !== activeTestIndex) {
+        setActiveTestIndex(closestIdx);
+      }
+      // small debug to help verify behavior in browser console
+      // eslint-disable-next-line no-console
+      console.debug('testimonials:onScroll', { scrollLeft: el.scrollLeft, active: closestIdx });
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => el.removeEventListener('scroll', onScroll);
+  }, [activeTestIndex]);
+
+  // autoplay (scrolls by one card width). pauses on hover/focus.
+  useEffect(() => {
+    const el = testimonialsRef.current || document.querySelector('[aria-label="Customer testimonials carousel"]') as HTMLElement | null;
+    if (!el) return;
+    const step = (() => {
+      const first = el.querySelector('.snap-start') as HTMLElement | null;
+      const gap = parseFloat(getComputedStyle(el).gap || (getComputedStyle(el) as any).columnGap || '24') || 24;
+      return first ? first.offsetWidth + gap : Math.round(el.clientWidth * 0.85);
+    })();
+    const play = () => {
+      if (isPausedRef.current) return;
+      // eslint-disable-next-line no-console
+      console.debug('testimonials:autoplay -> step', step);
+      el.scrollBy({ left: step, behavior: 'smooth' });
+    };
+    autoplayRef.current = window.setInterval(play, 4500);
+    return () => { if (autoplayRef.current) window.clearInterval(autoplayRef.current); };
+  }, []);
+
+  const scrollToIndex = (i: number) => {
+    const el = testimonialsRef.current || document.querySelector('[aria-label="Customer testimonials carousel"]') as HTMLElement | null;
+    if (!el) return;
+    const child = el.children[i] as HTMLElement | undefined;
+    if (!child) return;
+    // eslint-disable-next-line no-console
+    console.debug('testimonials:scrollToIndex', i, child.offsetLeft);
+    el.scrollTo({ left: Math.max(0, child.offsetLeft - 16), behavior: 'smooth' });
+  };
+
+  const computeStep = (el: HTMLElement) => {
+    const first = el.querySelector('.snap-start') as HTMLElement | null;
+    const gap = parseFloat(getComputedStyle(el).gap || (getComputedStyle(el) as any).columnGap || '24') || 24;
+    return first ? first.offsetWidth + gap : Math.round(el.clientWidth * 0.85);
+  };
+
+  const scrollNext = () => {
+    const el = testimonialsRef.current || document.querySelector('[aria-label="Customer testimonials carousel"]') as HTMLElement | null;
+    if (!el) return;
+    const step = computeStep(el);
+    // eslint-disable-next-line no-console
+    console.debug('testimonials:next', { step });
+    el.scrollBy({ left: step, behavior: 'smooth' });
+  };
+
+  const scrollPrev = () => {
+    const el = testimonialsRef.current || document.querySelector('[aria-label="Customer testimonials carousel"]') as HTMLElement | null;
+    if (!el) return;
+    const step = computeStep(el);
+    // eslint-disable-next-line no-console
+    console.debug('testimonials:prev', { step });
+    el.scrollBy({ left: -step, behavior: 'smooth' });
+  };
+
+  const pauseAutoplay = () => { isPausedRef.current = true; };
+  const resumeAutoplay = () => { isPausedRef.current = false; };
+  // keyboard support when carousel is focused
+  const onKeyDownCarousel = (e: React.KeyboardEvent) => {
+    if (e.key === 'ArrowRight') { e.preventDefault(); scrollNext(); }
+    if (e.key === 'ArrowLeft') { e.preventDefault(); scrollPrev(); }
+  };
+  // --- end testimonials carousel ---
+
+  // --- Marketplace statistics animation (count-up + entrance) ---
+  const statsRef = React.useRef<HTMLDivElement | null>(null);
+  const statsAnimatedRef = React.useRef(false);
+  const [statsInView, setStatsInView] = useState(false);
+  const [stats, setStats] = useState({ users: 0, products: 0, orders: 0, rating: 0 });
+  const statsTargets = { users: 8500, products: 2800, orders: 9200, rating: 4.8 };
+
+  const formatCompact = (n: number) => {
+    if (n >= 1000000) return `${(n / 1000000).toFixed(1)}M+`;
+    if (n >= 1000) {
+      const v = n / 1000;
+      return v % 1 === 0 ? `${v.toFixed(0)}K+` : `${v.toFixed(1)}K+`;
+    }
+    return `${n}`;
+  };
+
+  React.useEffect(() => {
+    const el = statsRef.current;
+    if (!el || statsAnimatedRef.current) return;
+    const obs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          statsAnimatedRef.current = true;
+          setStatsInView(true);
+          const duration = 1200;
+          const start = performance.now();
+          const animate = (now: number) => {
+            const t = Math.min(1, (now - start) / duration);
+            const ease = 1 - Math.pow(1 - t, 3); // easeOutCubic
+            setStats({
+              users: Math.round(statsTargets.users * ease),
+              products: Math.round(statsTargets.products * ease),
+              orders: Math.round(statsTargets.orders * ease),
+              rating: Math.min(statsTargets.rating, Number((statsTargets.rating * ease).toFixed(1)))
+            });
+            if (t < 1) requestAnimationFrame(animate);
+          };
+          requestAnimationFrame(animate);
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.45 });
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  // --- end marketplace stats ---
+
   const categoriesData = [
     { icon: Shirt, title: ProductCategory.MENS_WEAR, color: "bg-blue-600", desc: "Stylish shirts, comfortable basics, everyday wear" },
     { icon: ShoppingBag, title: ProductCategory.WOMENS_WEAR, color: "bg-pink-600", desc: "Dresses, tops, bottoms you'll love" },
@@ -131,7 +316,7 @@ const HomePage: React.FC = () => {
     { icon: Watch, title: ProductCategory.WOMENS_WATCHES, color: "bg-rose-500", desc: "Beautiful watches for any occasion" },
     { icon: Zap, title: ProductCategory.HOME, color: "bg-emerald-600", desc: "Smart home stuff and nice decor" },
     { icon: Apple, title: ProductCategory.GROCERY, color: "bg-lime-600", desc: "Fresh food, coffee, everyday essentials" },
-    { icon: Sparkles, title: ProductCategory.BEAUTY, color: "bg-fuchsia-500", desc: "Skincare, makeup, and nice scents" },
+    { icon: Palette, title: ProductCategory.BEAUTY, color: "bg-fuchsia-500", desc: "Skincare, makeup, and nice scents" },
   ];
 
   const sortedCategories = [...categoriesData].sort((a, b) => a.title.localeCompare(b.title));
@@ -143,9 +328,10 @@ const HomePage: React.FC = () => {
   }, [location]);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col overflow-x-hidden mobile-safe">
       {/* Hero Slideshow Section */}
-      <section className="relative h-96 md:h-[680px] flex items-center overflow-hidden">
+      <section className="bg-white py-6 sm:py-8 md:py-10 border-b border-gray-100 mx-3 sm:mx-4 md:mx-6 rounded-2xl md:rounded-3xl shadow-lg relative z-20 transition-colors -mt-6 md:-mt-10 overflow-hidden">
+
         <div className="absolute inset-0 z-0">
           {heroImages.map((img, idx) => (
             <div 
@@ -156,7 +342,7 @@ const HomePage: React.FC = () => {
               <img 
                 src={img} 
                 alt={`Hero ${idx}`} 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-top md:object-center object-cover"
               />
             </div>
           ))}
@@ -169,20 +355,23 @@ const HomePage: React.FC = () => {
                <span className="text-[8px] md:text-[9px] font-semibold uppercase tracking-widest">Shop Online</span>
             </div>
             
-            <h1 className="text-2xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-3 md:mb-5">
-              Everything You Need <br className="hidden md:block" /> 
+            <h1 className="hero-title text-xl sm:text-3xl md:text-5xl lg:text-6xl font-bold text-white leading-tight mb-3 md:mb-5">
+              Everything You Need <br className="hidden sm:block" /> 
               <span className="static-brand-gradient">In One Place</span>
             </h1>
             
-            <p className="text-sm md:text-base text-gray-200 mb-6 md:mb-8 leading-relaxed font-medium max-w-lg">
+            <p className="hero-lead text-sm sm:text-base text-gray-200 mb-4 sm:mb-6 md:mb-8 leading-relaxed font-medium max-w-lg">
               Great products, fast delivery. Everything from fashion to electronics, all in one store.
             </p>
             
-            <div className="flex flex-col md:flex-row gap-3 md:gap-4">
-              <Link to="/shop" className="btn-gradient px-6 md:px-8 py-3 md:py-4 text-white text-sm md:text-base rounded-lg md:rounded-xl font-bold flex items-center justify-center shadow-lg group">
-                Shop Now <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
+            <div className="flex flex-col sm:flex-row gap-3 md:gap-4 w-full max-w-sm sm:max-w-none">
+              <Link to="/shop" className="relative overflow-hidden btn-gradient w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 text-white text-sm md:text-base rounded-lg md:rounded-xl font-bold flex items-center justify-center shadow-lg group">
+                <span aria-hidden className="btn-gradient__shine" />
+                <span className="relative z-10 flex items-center">
+                  Shop Now <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
+                </span>
               </Link>
-              <Link to="/orders" className="px-6 md:px-8 py-3 md:py-4 bg-white/5 hover:bg-white/10 text-white border border-white/20 rounded-lg md:rounded-xl font-bold text-sm md:text-base backdrop-blur-xl transition-all text-center">
+              <Link to="/orders" className="w-full sm:w-auto px-6 md:px-8 py-3 md:py-4 bg-white/16 sm:bg-white/8 text-white shadow-sm ring-1 ring-white/10 border border-white/10 rounded-lg md:rounded-xl font-bold text-sm md:text-base backdrop-blur-xl transition-all text-center">
                 Track Order
               </Link>
             </div>
@@ -190,7 +379,8 @@ const HomePage: React.FC = () => {
         </div>
 
         {/* Slideshow Indicators */}
-        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-2">
+        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 z-20 flex gap-2 max-w-full overflow-hidden px-2">
+
           {heroImages.map((_, idx) => (
             <button 
               key={idx}
@@ -203,43 +393,44 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Trust & Metrics */}
-      <section className="bg-white py-8 md:py-10 border-b border-gray-100 mx-4 md:mx-6 rounded-2xl md:rounded-3xl shadow-lg relative z-20 transition-colors -mt-8 md:-mt-10">
-         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="flex items-center gap-4 px-4 group cursor-pointer">
-               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all"><Truck size={22} /></div>
+      <section className="bg-white py-6 sm:py-8 md:py-10 border-b border-gray-100 rounded-2xl md:rounded-3xl shadow-lg relative z-20 transition-colors -mt-8 md:-mt-10 mx-4 sm:mx-6 lg:mx-auto max-w-7xl">
+
+         <div className="max-w-7xl mx-auto px-4 sm:px-6 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
+            <div className="flex items-center gap-3 sm:gap-4 px-2 sm:px-4 group cursor-pointer">
+               <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all"><Truck size={20} /></div>
                <div>
-                  <p className="font-black text-gray-900 text-sm leading-none">Global Logistics</p>
-                  <p className="text-[10px] text-gray-400 font-bold mt-1">Free delivery over ₹1500</p>
+                  <p className="font-black text-gray-900 text-xs sm:text-sm leading-none">Global Logistics</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-400 font-bold mt-1">Free delivery over ₹1500</p>
                </div>
             </div>
-            <div className="flex items-center gap-4 px-4 border-gray-100 md:border-x group cursor-pointer">
-               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all"><ShieldCheck size={22} /></div>
+            <div className="flex items-center gap-3 sm:gap-4 px-2 sm:px-4 border-gray-100 sm:border-x group cursor-pointer">
+               <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all"><ShieldCheck size={20} /></div>
                <div>
-                  <p className="font-black text-gray-900 text-sm leading-none">Buyer Protection</p>
-                  <p className="text-[10px] text-gray-400 font-bold mt-1">100% Secure Checkout</p>
+                  <p className="font-black text-gray-900 text-xs sm:text-sm leading-none">Buyer Protection</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-400 font-bold mt-1">100% Secure Checkout</p>
                </div>
             </div>
-            <div className="flex items-center gap-4 px-4 group cursor-pointer">
-               <div className="p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all"><TrendingUp size={22} /></div>
+            <div className="flex items-center gap-3 sm:gap-4 px-2 sm:px-4 group cursor-pointer">
+               <div className="p-2 sm:p-3 bg-indigo-50 text-indigo-600 rounded-xl group-hover:bg-indigo-600 group-hover:text-white transition-all"><TrendingUp size={20} /></div>
                <div>
-                  <p className="font-black text-gray-900 text-sm leading-none">Quality Assurance</p>
-                  <p className="text-[10px] text-gray-400 font-bold mt-1">Curated premium partners</p>
+                  <p className="font-black text-gray-900 text-xs sm:text-sm leading-none">Quality Assurance</p>
+                  <p className="text-[9px] sm:text-[10px] text-gray-400 font-bold mt-1">Curated premium partners</p>
                </div>
             </div>
          </div>
       </section>
 
       {/* Categorical Boutiques */}
-      <section className="py-24 bg-white relative overflow-hidden transition-colors">
+      <section className="py-16 sm:py-24 bg-white relative overflow-hidden transition-colors">
         {/* Decorative Background */}
         <div className="absolute top-0 left-0 w-full h-full pointer-events-none opacity-40">
-           <div className="absolute top-0 right-0 w-[50rem] h-[50rem] bg-indigo-50 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
-           <div className="absolute bottom-0 left-0 w-[40rem] h-[40rem] bg-pink-50 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2"></div>
+           <div className="hidden md:block absolute top-0 right-0 w-[50rem] h-[50rem] bg-indigo-50 rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2" aria-hidden></div>
+           <div className="hidden md:block absolute bottom-0 left-0 w-[40rem] h-[40rem] bg-pink-50 rounded-full blur-[100px] translate-y-1/2 -translate-x-1/2" aria-hidden></div>
         </div>
 
         <div className="max-w-7xl mx-auto px-6 relative z-10">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter mb-4">
+          <div className="text-center mb-12 sm:mb-16">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter mb-4">
               Explore Our <span className="static-brand-gradient">Products</span>
             </h2>
             <p className="text-gray-500 font-medium text-sm md:text-base max-w-xl mx-auto leading-relaxed">
@@ -248,7 +439,7 @@ const HomePage: React.FC = () => {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {sortedCategories.map((cat, idx) => (
               <div key={idx} className="h-full">
                 <CategoryCard icon={cat.icon} title={cat.title} color={cat.color} desc={cat.desc} />
@@ -259,23 +450,23 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* AI Assistant (Knowledge Base Version) */}
-      <section ref={aiSectionRef} id="ai-assistant" className="py-24 bg-slate-950 relative overflow-hidden transition-colors">
+      <section ref={aiSectionRef} id="ai-assistant" className="py-16 sm:py-24 bg-slate-950 relative overflow-hidden transition-colors">
         <div className="absolute inset-0 z-0">
            <img src="https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=1920" className="w-full h-full object-cover opacity-[0.05]" alt="Tech Background" />
            <div className="absolute inset-0 bg-gradient-to-br from-indigo-950/90 to-slate-950"></div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center gap-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 flex flex-col lg:flex-row items-center gap-8 lg:gap-16 relative z-10">
           <div className="flex-1">
-            <div className="flex items-center gap-3 mb-6">
+            <div className="flex items-center gap-3 mb-4 sm:mb-6">
                <div className="p-2 bg-indigo-600 rounded-xl text-white shadow-lg shadow-indigo-500/30"><Sparkles size={20} /></div>
                <span className="text-indigo-400 font-black tracking-widest text-[9px] uppercase">Bazaar Concierge</span>
             </div>
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-6 tracking-tighter leading-tight">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-4 sm:mb-6 tracking-tighter leading-tight">
               Intelligent Shopping <br/>
               <span className="static-brand-gradient">Support</span>
             </h2>
-            <p className="text-base text-gray-400 mb-10 font-medium leading-relaxed max-w-md">
+            <p className="text-sm sm:text-base text-gray-400 mb-6 sm:mb-10 font-medium leading-relaxed max-w-md">
               Select a question below to learn more about our operations and boutique services.
             </p>
             
@@ -309,17 +500,17 @@ const HomePage: React.FC = () => {
           </div>
           
           <div className="flex-1 w-full lg:w-auto">
-             <div className="relative rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
+             <div className="relative rounded-[2rem] sm:rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl group">
                <img 
                  src="https://i.guim.co.uk/img/media/972c2e5d838f1bcb3cc96affbda5e3de93f85095/0_343_5138_3082/master/5138.jpg?width=1200&height=900&quality=85&auto=format&fit=crop&s=36b682eeb6bbc2cc825f41d1b49431d9" 
                  alt="Style Concierge" 
-                 className="w-full h-[520px] object-cover transition-transform duration-1000 group-hover:scale-105"
+                 className="w-full h-[400px] sm:h-[450px] lg:h-[520px] object-cover transition-transform duration-1000 group-hover:scale-105"
                />
                <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
-               <div className="absolute bottom-10 left-10 right-10 p-8 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[2rem]">
+               <div className="absolute bottom-6 sm:bottom-10 left-6 sm:left-10 right-6 sm:right-10 p-6 sm:p-8 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] sm:rounded-[2rem]">
                  <div className="flex items-center gap-3 mb-2">
                     <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-                    <p className="text-white font-black text-xl tracking-tight">Instant Assistance</p>
+                    <p className="text-white font-black text-lg sm:text-xl tracking-tight">Instant Assistance</p>
                  </div>
                  <p className="text-indigo-300 font-bold uppercase tracking-widest text-[9px]">Verified Support Core</p>
                </div>
@@ -329,32 +520,32 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Seasonal Promos */}
-      <section className="py-24 bg-white transition-colors">
-         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12">
-            <div className="group relative rounded-[3rem] overflow-hidden h-[520px] shadow-xl hover:shadow-[0_30px_70px_-15px_rgba(79,70,229,0.3)] hover:scale-[1.03] hover:-translate-y-2 transition-all duration-700 ease-out cursor-pointer">
+      <section className="py-16 sm:py-24 bg-white transition-colors">
+         <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+            <div className="group relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden h-[400px] sm:h-[450px] lg:h-[520px] shadow-xl hover:shadow-[0_30px_70px_-15px_rgba(79,70,229,0.3)] hover:scale-[1.02] hover:-translate-y-2 transition-all duration-700 ease-out cursor-pointer">
                <img src="https://images.unsplash.com/photo-1614164185128-e4ec99c436d7?auto=format&fit=crop&q=80&w=1200" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" alt="Luxury Watch" />
                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent group-hover:from-indigo-900/80 transition-all duration-700"></div>
-               <div className="absolute inset-0 p-12 flex flex-col justify-end">
+               <div className="absolute inset-0 p-8 sm:p-12 flex flex-col justify-end">
                   <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
-                    <span className="inline-block bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-4">January Arrival</span>
-                    <h3 className="text-5xl font-black text-white mb-4 tracking-tighter leading-none">WATCH <br/>STUDIO</h3>
-                    <p className="text-indigo-100/60 font-medium text-sm mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">Exquisite horology crafted for premium precision.</p>
-                    <Link to="/shop?category=Men's Watches" className="w-fit px-8 py-4 bg-white text-gray-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-2xl flex items-center gap-3">
+                    <span className="inline-block bg-indigo-600 text-white text-[9px] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-3 sm:mb-4">January Arrival</span>
+                    <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-3 sm:mb-4 tracking-tighter leading-none">WATCH <br/>STUDIO</h3>
+                    <p className="text-indigo-100/60 font-medium text-sm mb-4 sm:mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">Exquisite horology crafted for premium precision.</p>
+                    <Link to="/shop?category=Men's Watches" className="w-fit px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all shadow-2xl flex items-center gap-3">
                       EXPLORE TIMEPIECES <ArrowRight size={14} />
                     </Link>
                   </div>
                </div>
             </div>
             
-            <div className="group relative rounded-[3rem] overflow-hidden h-[520px] shadow-xl hover:shadow-[0_30px_70px_-15px_rgba(219,39,119,0.3)] hover:scale-[1.03] hover:-translate-y-2 transition-all duration-700 ease-out cursor-pointer">
+            <div className="group relative rounded-[2rem] sm:rounded-[3rem] overflow-hidden h-[400px] sm:h-[450px] lg:h-[520px] shadow-xl hover:shadow-[0_30px_70px_-15px_rgba(219,39,119,0.3)] hover:scale-[1.02] hover:-translate-y-2 transition-all duration-700 ease-out cursor-pointer">
                <img src="https://www.jiomart.com/images/product/original/rvww8q4azr/iloz-latest-new-luxury-silver-diamond-bracelet-strap-party-wear-watch-for-girls-women-trendy-designer-best-quartz-analog-watches-for-women-product-images-rvww8q4azr-0-202303011306.jpg?im=Resize=(1000,1000)" className="w-full h-full object-cover transition-all duration-1000 group-hover:scale-110" alt="Elite Couture" />
                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent group-hover:from-pink-900/80 transition-all duration-700"></div>
-               <div className="absolute inset-0 p-12 flex flex-col justify-end">
+               <div className="absolute inset-0 p-8 sm:p-12 flex flex-col justify-end">
                   <div className="transform translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
-                    <span className="inline-block bg-pink-600 text-white text-[9px] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-4">January Edition</span>
-                    <h3 className="text-5xl font-black text-white mb-4 tracking-tighter leading-none">ELITE <br/>COUTURE</h3>
-                    <p className="text-pink-100/60 font-medium text-sm mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">Bespoke luxury tailored for the season.</p>
-                    <Link to="/shop?category=Women's Watches" className="w-fit px-8 py-4 bg-white text-gray-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-pink-600 hover:text-white transition-all shadow-2xl flex items-center gap-3">
+                    <span className="inline-block bg-pink-600 text-white text-[9px] font-black uppercase tracking-[0.3em] px-3 py-1.5 rounded-full mb-3 sm:mb-4">January Edition</span>
+                    <h3 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white mb-3 sm:mb-4 tracking-tighter leading-none">ELITE <br/>COUTURE</h3>
+                    <p className="text-pink-100/60 font-medium text-sm mb-4 sm:mb-6 max-w-xs opacity-0 group-hover:opacity-100 transition-opacity duration-700 delay-100">Bespoke luxury tailored for the season.</p>
+                    <Link to="/shop?category=Women's Watches" className="w-fit px-6 sm:px-8 py-3 sm:py-4 bg-white text-gray-900 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-pink-600 hover:text-white transition-all shadow-2xl flex items-center gap-3">
                       VIEW COLLECTION <ArrowRight size={14} />
                     </Link>
                   </div>
@@ -367,8 +558,8 @@ const HomePage: React.FC = () => {
       <section className="py-24 bg-slate-50 relative overflow-hidden">
          {/* Decorative Background Elements */}
          <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-            <div className="absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-indigo-200/20 rounded-full blur-[100px]"></div>
-            <div className="absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-pink-200/20 rounded-full blur-[100px]"></div>
+            <div className="hidden md:block absolute top-[-10%] right-[-5%] w-[400px] h-[400px] bg-indigo-200/20 rounded-full blur-[100px]" aria-hidden></div>
+            <div className="hidden md:block absolute bottom-[-10%] left-[-5%] w-[400px] h-[400px] bg-pink-200/20 rounded-full blur-[100px]" aria-hidden></div>
          </div>
 
          <div className="max-w-7xl mx-auto px-6 relative z-10">
@@ -381,17 +572,17 @@ const HomePage: React.FC = () => {
                <p className="text-gray-500 font-medium text-base max-w-xl mx-auto">We're redefining the digital shopping landscape with a commitment to excellence, security, and uncompromising quality.</p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
                {/* Fast Delivery */}
-               <div className="group relative bg-white p-10 rounded-[3rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 overflow-hidden">
+               <div className="group relative bg-white p-6 sm:p-8 lg:p-10 rounded-[2rem] sm:rounded-[3rem] border border-gray-100 shadow-sm hover:shadow-2xl hover:-translate-y-3 transition-all duration-500 overflow-hidden">
                   <div className="absolute top-0 left-0 w-2 h-full bg-gradient-to-b from-indigo-500 to-blue-500 transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500"></div>
-                  <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 relative">
-                     <div className="absolute inset-0 bg-indigo-600 rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity animate-pulse"></div>
-                     <Truck className="text-indigo-600 group-hover:text-white transition-colors relative z-10 hover-float" size={36} />
+                  <div className="w-16 sm:w-20 h-16 sm:h-20 bg-indigo-50 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 sm:mb-8 group-hover:scale-110 group-hover:rotate-3 transition-all duration-500 relative">
+                     <div className="absolute inset-0 bg-indigo-600 rounded-2xl sm:rounded-3xl opacity-0 group-hover:opacity-100 blur-xl transition-opacity animate-pulse"></div>
+                     <Truck className="text-indigo-600 group-hover:text-white transition-colors relative z-10 hover-float" size={28} />
                   </div>
-                  <h3 className="font-black text-gray-900 mb-4 text-xl tracking-tight">Fast Delivery</h3>
+                  <h3 className="font-black text-gray-900 mb-3 sm:mb-4 text-lg sm:text-xl tracking-tight">Fast Delivery</h3>
                   <p className="text-sm text-gray-600 font-medium leading-relaxed">Experience lightning-fast shipping. 24-hour delivery to major cities and 2-4 days nationwide.</p>
-                  <div className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-4 sm:mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">
                      Learn More <ArrowRight size={12} />
                   </div>
                </div>
@@ -442,97 +633,125 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Customer Testimonials */}
-      <section className="py-24 bg-white transition-colors">
+      <section className="py-16 sm:py-24 bg-white transition-colors">
          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-               <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-4">
+            <div className="text-center mb-12 sm:mb-16">
+               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-4">
                   What Our <span className="static-brand-gradient">Customers Say</span>
                </h2>
                <p className="text-gray-400 font-medium text-sm max-w-lg mx-auto">Join thousands of satisfied customers who trust ClickBazaar.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-               {[
-                  {
-                     name: "Priya Singh",
-                     role: "Fashion Enthusiast",
-                     image: "https://i.pravatar.cc/150?img=1",
-                     text: "ClickBazaar's collection is absolutely stunning! The quality is premium and delivery was faster than expected."
-                  },
-                  {
-                     name: "Rajesh Kumar",
-                     role: "Tech Lover",
-                     image: "https://i.pravatar.cc/150?img=2",
-                     text: "Best place for electronics. Great prices, authentic products, and excellent after-sales support."
-                  },
-                  {
-                     name: "Ananya Patel",
-                     role: "Home Decor Expert",
-                     image: "https://i.pravatar.cc/150?img=3",
-                     text: "The curated home collection transformed my space. Love the attention to detail and customer service."
-                  }
-               ].map((testimonial, idx) => (
-                  <div key={idx} className="bg-gray-50 p-8 rounded-[2.5rem] border border-gray-100 hover:shadow-lg hover:border-indigo-100 transition-all">
-                     <div className="flex items-center gap-3 mb-6">
-                        {[...Array(5)].map((_, i) => (
-                           <Star key={i} size={16} className="fill-amber-400 text-amber-400" />
-                        ))}
-                     </div>
-                     <p className="text-gray-600 font-medium mb-6 leading-relaxed">"{testimonial.text}"</p>
-                     <div className="flex items-center gap-3">
-                        <img src={testimonial.image} alt={testimonial.name} className="w-12 h-12 rounded-full" />
-                        <div>
-                           <p className="font-black text-gray-900 text-sm">{testimonial.name}</p>
-                           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{testimonial.role}</p>
+
+            <div className="relative">
+               {/* left arrow (visible on md+) */}
+               <div className="absolute left-0 top-1/2 -translate-y-1/2 z-20 hidden md:flex">
+                  <button onClick={scrollPrev} aria-label="Previous testimonial" className="w-10 h-10 bg-white border border-gray-100 rounded-xl shadow flex items-center justify-center hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                     <ChevronLeft size={18} />
+                  </button>
+               </div>
+
+               {/* scrollable track */}
+               <div
+                  ref={testimonialsRef}
+                  role="region"
+                  aria-label="Customer testimonials carousel"
+                  tabIndex={0}
+                  onFocus={pauseAutoplay}
+                  onBlur={resumeAutoplay}
+                  onMouseEnter={pauseAutoplay}
+                  onMouseLeave={resumeAutoplay}
+                  onKeyDown={onKeyDownCarousel}
+                  className="flex gap-6 overflow-x-auto scroll-smooth snap-x snap-mandatory px-2 sm:px-6 py-6 touch-pan-x w-full"
+
+
+                  style={{ WebkitOverflowScrolling: 'touch' }}
+               >
+                  {testimonials.map((t, idx) => (
+                     <article key={idx} tabIndex={0} aria-roledescription="slide" aria-label={`${t.name}, ${t.role}`} className="snap-start flex-shrink-0 w-[90%] sm:w-[48%] md:w-[32%] lg:w-[28%] bg-gray-50 p-6 sm:p-8 rounded-[2rem] sm:rounded-[2.5rem] border border-gray-100 hover:shadow-lg transition-all">
+                        <div className="flex items-center gap-3 mb-4 sm:mb-6">
+                           {[...Array(5)].map((_, i) => (
+                              <Star key={i} size={16} className="fill-amber-400 text-amber-400" />
+                           ))}
                         </div>
-                     </div>
-                  </div>
-               ))}
+                        <p className="text-gray-600 font-medium mb-4 sm:mb-6 leading-relaxed text-sm sm:text-base">"{t.text}"</p>
+                        <div className="flex items-center gap-3 mt-4 sm:mt-6">
+                           <img src={t.image} alt={t.name} className="w-10 sm:w-12 h-10 sm:h-12 rounded-full" />
+                           <div>
+                              <p className="font-black text-gray-900 text-sm">{t.name}</p>
+                              <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">{t.role}</p>
+                           </div>
+                        </div>
+                     </article>
+                  ))}
+               </div>
+
+               {/* right arrow (visible on md+) */}
+               <div className="absolute right-0 top-1/2 -translate-y-1/2 z-20 hidden md:flex">
+                  <button onClick={scrollNext} aria-label="Next testimonial" className="w-10 h-10 bg-white border border-gray-100 rounded-xl shadow flex items-center justify-center hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-300">
+                     <ChevronRight size={18} />
+                  </button>
+               </div>
+
+               {/* indicators */}
+               <div className="mt-6 flex items-center justify-center gap-2">
+                  {testimonials.map((_, i) => (
+                     <button key={i} onClick={() => scrollToIndex(i)} aria-label={`Go to testimonial ${i + 1}`} className={`w-2 h-2 rounded-full transition-all ${i === activeTestIndex ? 'bg-indigo-600 scale-110' : 'bg-gray-300'}`} />
+                  ))}
+               </div>
             </div>
          </div>
       </section>
 
-      {/* Marketplace Statistics */}
-      <section className="py-16 bg-gradient-to-r from-slate-900 to-slate-800 text-white overflow-hidden">
-         <div className="max-w-7xl mx-auto px-6">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-               <div className="text-center">
-                  <p className="text-4xl md:text-5xl font-black mb-2 static-brand-gradient">8.5K+</p>
+      {/* Marketplace Statistics (animated) */}
+      <section className="relative min-h-[60vh] sm:h-80 md:h-[680px] flex items-center overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6">
+            <div ref={statsRef} className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8 items-center" role="group" aria-label="Marketplace statistics">
+
+               <div className={`text-center transition-transform duration-700 ${statsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 static-brand-gradient" aria-live="polite">{formatCompact(stats.users)}</p>
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-300">Active Users</p>
                </div>
-               <div className="text-center">
-                  <p className="text-4xl md:text-5xl font-black mb-2 static-brand-gradient">2.8K+</p>
+
+               <div className={`text-center transition-transform duration-700 delay-75 ${statsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 static-brand-gradient" aria-live="polite">{formatCompact(stats.products)}</p>
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-300">Premium Products</p>
                </div>
-               <div className="text-center">
-                  <p className="text-4xl md:text-5xl font-black mb-2 static-brand-gradient">9.2K+</p>
+
+               <div className={`text-center transition-transform duration-700 delay-150 ${statsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 static-brand-gradient" aria-live="polite">{formatCompact(stats.orders)}</p>
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-300">Orders Delivered</p>
                </div>
-               <div className="text-center">
-                  <p className="text-4xl md:text-5xl font-black mb-2 static-brand-gradient">4.8★</p>
+
+               <div className={`text-center transition-transform duration-700 delay-200 ${statsInView ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+                  <p className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 static-brand-gradient flex items-center justify-center gap-2" aria-live="polite">
+                     <span>{stats.rating.toFixed(1)}</span>
+                     <span className="text-yellow-400" aria-hidden>★</span>
+                  </p>
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-300">Average Rating</p>
                </div>
+
             </div>
          </div>
       </section>
 
       {/* Flash Deals Section */}
-      <section className="py-24 bg-white transition-colors">
+      <section className="py-16 sm:py-24 bg-white transition-colors">
          <div className="max-w-7xl mx-auto px-6">
-            <div className="flex justify-between items-center mb-12">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-8 sm:mb-12 gap-4">
                <div>
-                  <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-2 flex items-center gap-3">
-                     <Flame className="text-red-500 animate-pulse" size={32} />
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-2 flex items-center gap-3">
+                     <Flame className="text-red-500 animate-pulse" size={28} />
                      <span className="static-brand-gradient">Flash Deals</span>
                   </h2>
                   <p className="text-gray-400 font-medium text-sm">Limited time offers ending soon</p>
                </div>
-               <Link to="/shop" className="text-indigo-600 font-black text-xs uppercase tracking-[0.2em] flex items-center gap-2 hover:underline">
+               <Link to="/shop" className="text-indigo-600 font-black text-xs uppercase tracking-[0.2em] flex items-center gap-2 hover:underline self-start sm:self-center">
                   View All <ArrowRight size={14} />
                </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 justify-items-center">
                {flashDeals.map((product) => (
-                  <div key={product.id} className="w-full flex justify-center py-10">
+                  <div key={product.id} className="w-full flex justify-center py-6 sm:py-10">
                     <ExpandableProductCard product={product} />
                   </div>
                ))}
@@ -541,15 +760,15 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 bg-gray-50 transition-colors">
+      <section className="py-16 sm:py-24 bg-gray-50 transition-colors">
          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-               <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-4">
+            <div className="text-center mb-12 sm:mb-16">
+               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-4">
                   Shopping Made <span className="static-brand-gradient">Simple</span>
                </h2>
                <p className="text-gray-400 font-medium text-sm max-w-lg mx-auto">Follow these simple steps to get your favorite products delivered to your doorstep.</p>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
                {[
                   { icon: ShoppingBag, title: "Browse & Select", desc: "Explore 50+ categories with curated collections and expert picks." },
                   { icon: Truck, title: "Add to Cart", desc: "Customize your selections and proceed to secure checkout." },
@@ -558,15 +777,15 @@ const HomePage: React.FC = () => {
                ].map((step, idx) => (
                   <div key={idx} className="relative">
                      <div className="text-center">
-                        <div className="w-16 h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-6 font-black text-2xl shadow-lg shadow-indigo-200">
+                        <div className="w-12 sm:w-16 h-12 sm:h-16 bg-indigo-600 text-white rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6 font-black text-lg sm:text-2xl shadow-lg shadow-indigo-200">
                            {idx + 1}
                         </div>
-                        <div className="p-4 bg-white rounded-2xl border border-gray-100">
-                           <div className="flex justify-center mb-4">
-                              <step.icon className="text-indigo-600" size={32} />
+                        <div className="p-4 sm:p-6 bg-white rounded-2xl border border-gray-100">
+                           <div className="flex justify-center mb-3 sm:mb-4">
+                              <step.icon className="text-indigo-600" size={28} />
                            </div>
-                           <h3 className="font-black text-gray-900 mb-2">{step.title}</h3>
-                           <p className="text-sm text-gray-600 font-medium">{step.desc}</p>
+                           <h3 className="font-black text-gray-900 mb-2 text-sm sm:text-base">{step.title}</h3>
+                           <p className="text-xs sm:text-sm text-gray-600 font-medium">{step.desc}</p>
                         </div>
                      </div>
                      {idx < 3 && (
@@ -581,15 +800,15 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Premium Partners */}
-      <section className="py-24 bg-white transition-colors">
+      <section className="py-16 sm:py-24 bg-white transition-colors">
          <div className="max-w-7xl mx-auto px-6">
-            <div className="text-center mb-16">
-               <h2 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-4">
+            <div className="text-center mb-12 sm:mb-16">
+               <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-gray-900 tracking-tighter mb-4">
                   Trusted by <span className="static-brand-gradient">Industry Leaders</span>
                </h2>
                <p className="text-gray-400 font-medium text-sm max-w-lg mx-auto">We partner with the world's best brands to bring you authentic products.</p>
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-8 items-center">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 sm:gap-8 items-center">
                {[
                   { name: "Apple", logo: "https://cdn.worldvectorlogo.com/logos/apple-1.svg" },
                   { name: "Samsung", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRujWSMCod5T-6LfkhoKW4pItwyZTKI_fXqSg&s" },
@@ -601,8 +820,8 @@ const HomePage: React.FC = () => {
                   { name: "Raymond", logo: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTBXBFIvNQRaW46mMIyz0lbf17s0Idt6Lf2tA&s" },
                   { name: "JBL", logo: "https://cdn.worldvectorlogo.com/logos/jbl.svg" }
                ].map((brand, idx) => (
-                  <div key={idx} className="h-16 flex items-center justify-center p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all group">
-                     <img src={brand.logo} alt={brand.name} className="h-8 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
+                  <div key={idx} className="h-12 sm:h-16 flex items-center justify-center p-3 sm:p-4 bg-gray-50 rounded-2xl border border-gray-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all group">
+                     <img src={brand.logo} alt={brand.name} className="h-6 sm:h-8 object-contain opacity-40 group-hover:opacity-100 transition-opacity" />
                   </div>
                ))}
             </div>
@@ -610,20 +829,35 @@ const HomePage: React.FC = () => {
       </section>
 
       {/* Newsletter Section */}
-      <section className="py-24 bg-gradient-to-r from-indigo-600 to-purple-600 transition-colors">
+      <section className="py-16 sm:py-24 bg-gradient-to-r from-indigo-600 to-purple-600 transition-colors">
          <div className="max-w-4xl mx-auto px-6 text-center">
-            <h2 className="text-3xl md:text-4xl font-black text-white mb-4 tracking-tighter">Stay Updated</h2>
-            <p className="text-indigo-100 font-medium text-lg mb-10">Subscribe to get exclusive deals, new arrivals, and special offers delivered to your inbox.</p>
-            <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
+            <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-4 tracking-tighter">Stay Updated</h2>
+            <p className="text-indigo-100 font-medium text-base sm:text-lg mb-8 sm:mb-10">Subscribe to get exclusive deals, new arrivals, and special offers delivered to your inbox.</p>
+            <form onSubmit={handleSubscribe} className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto" aria-label="Subscribe to newsletter">
                <input 
                   type="email"
+                  value={newsletterEmail}
+                  onChange={e => setNewsletterEmail(e.target.value)}
                   placeholder="Enter your email"
+                  aria-label="Email address"
                   className="flex-grow px-6 py-4 rounded-2xl bg-white/95 border border-white/20 placeholder-gray-400 font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
                />
-               <button className="px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center gap-2">
-                  <Mail size={18} /> Subscribe
+               <button
+                  type="submit"
+                  disabled={newsletterLoading}
+                  className="px-6 sm:px-8 py-4 bg-white text-indigo-600 rounded-2xl font-black text-sm uppercase tracking-widest hover:bg-indigo-50 transition-all shadow-lg flex items-center justify-center gap-2 disabled:opacity-60"
+               >
+                  {newsletterLoading ? <Loader2 className="animate-spin" size={18} /> : <><Mail size={18} /> Subscribe</>}
                </button>
-            </div>
+            </form>
+
+            {/* inline feedback for accessibility */}
+            {newsletterMessage && (
+              <p role="status" aria-live="polite" className={`mt-4 text-sm font-semibold ${newsletterMessage.type === 'success' ? 'text-green-200' : 'text-amber-200'}`}>
+                {newsletterMessage.text}
+              </p>
+            )}
+
             <p className="text-indigo-100 text-[10px] font-bold uppercase tracking-wider mt-6">We respect your privacy. Unsubscribe anytime.</p>
          </div>
       </section>

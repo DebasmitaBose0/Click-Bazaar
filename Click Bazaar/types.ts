@@ -48,6 +48,7 @@ export interface FAQ {
 export interface Product {
   id: string;
   orderId?: string;
+  trackingId?: string;
   name: string;
   category: ProductCategory;
   price: number;

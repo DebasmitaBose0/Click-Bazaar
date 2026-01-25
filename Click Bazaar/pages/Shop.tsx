@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { useSearchParams } from 'react-router-dom';
-import { Search, Loader2, Plus, Minus, X, Truck, Check, Star, ShoppingCart, Sparkles, Heart } from 'lucide-react';
+import { Search, Loader2, Plus, Minus, X, Truck, Check, Star, ShoppingCart, Sparkles, Heart, Palette } from 'lucide-react';
 import { api } from '../services/api';
 import { Product, ProductCategory } from '../types';
 import { AppContext, formatCurrency, SiteLoader, CategoryBackground } from '../shared';
@@ -16,11 +16,13 @@ const ScrollToTopOnMount = () => {
 
 const ShopPage: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isAutocompleteOpen, setIsAutocompleteOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
+  const autocompleteRef = useRef<HTMLDivElement>(null);
   const context = useContext(AppContext);
   const { setBgCategory } = context!;
 
@@ -190,7 +192,7 @@ const ShopPage: React.FC = () => {
         gradient: 'from-slate-500/30 via-indigo-500/20 to-slate-300/10', 
         accent: 'indigo',
         bgColor: 'bg-white',
-        bgPattern: 'bg-[url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect fill=\'none\' width=\'100\' height=\'100\'/%3E%3Cpath d=\'M30 30 L70 30 L70 70 L30 70 Z\' stroke=\'%34818cf\' stroke-width=\'2\' fill=\'none\' opacity=\'0.08\'/%3E%3Cline x1=\'50\' y1=\'30\' x2=\'50\' y2=\'70\' stroke=\'%34818cf\' stroke-width=\'1\' opacity=\'0.08\'/%3E%3Cline x1=\'30\' y1=\'50\' x2=\'70\' y2=\'50\' stroke=\'%34818cf\' stroke-width=\'1\' opacity=\'0.08\'/%3E%3C/svg%3E")] opacity-100',
+        bgPattern: 'bg-[url("data:image/svg+xml,%3Csvg width=\'100\' height=\'100\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Crect fill=\'none\' width=\'100\' height=\'100\'/%3E%3Cpath d=\'M30 30 L70 30 L70 70 L30 70 Z\' stroke=\'%234818cf\' stroke-width=\'2\' fill=\'none\' opacity=\'0.08\'/%3E%3Cline x1=\'50\' y1=\'30\' x2=\'50\' y2=\'70\' stroke=\'%234818cf\' stroke-width=\'1\' opacity=\'0.08\'/%3E%3Cline x1=\'30\' y1=\'50\' x2=\'70\' y2=\'50\' stroke=\'%234818cf\' stroke-width=\'1\' opacity=\'0.08\'/%3E%3C/svg%3E")] opacity-100',
         textAccent: 'text-indigo-700',
         borderColor: 'border-indigo-300'
       };
@@ -200,62 +202,237 @@ const ShopPage: React.FC = () => {
   const theme = getCategoryTheme(selectedCategory);
 
   return (
-    <div className={`relative min-h-screen transition-all duration-500`}>
-      <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-20 relative">
+    <div className={`relative min-h-screen overflow-hidden`}>
+      {/* Animated Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-white via-blue-50/30 to-purple-50/20" />
+        
+        {/* Animated Gradient Orbs */}
+        <div className="hidden md:block absolute top-0 left-1/4 w-96 h-96 bg-gradient-to-br from-blue-300/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animation: 'float 8s ease-in-out infinite' }} />
+        <div className="hidden md:block absolute top-1/2 right-1/4 w-80 h-80 bg-gradient-to-br from-purple-300/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animation: 'float 10s ease-in-out infinite 2s' }} />
+        <div className="hidden md:block absolute bottom-0 left-1/2 w-96 h-96 bg-gradient-to-br from-indigo-300/20 to-transparent rounded-full blur-3xl animate-pulse" style={{ animation: 'float 12s ease-in-out infinite 4s' }} />
+        
+        {/* Grid Pattern Overlay */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(99,102,241,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(99,102,241,0.03)_1px,transparent_1px)] bg-[size:40px_40px]" />
+        
+        {/* Top Accent Line */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-200 to-transparent" />
+      </div>
+
+      <style>{`
+        html {
+          scroll-behavior: smooth;
+        }
+        
+        @keyframes float {
+          0%, 100% { transform: translate(0px, 0px); }
+          25% { transform: translate(20px, -20px); }
+          50% { transform: translate(-20px, 20px); }
+          75% { transform: translate(10px, -10px); }
+        }
+        
+        @keyframes shimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        
+        @keyframes slideInDown {
+          from {
+            opacity: 0;
+            transform: translateY(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        .shop-header {
+          animation: slideInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .shop-filters {
+          animation: slideInDown 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+          backdrop-filter: blur(10px);
+          background: rgba(255, 255, 255, 0.7);
+        }
+        
+        .shop-catalog {
+          animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
+        }
+        
+        .grid {
+          animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s both;
+        }
+        
+        .grid > div {
+          animation: fadeInUp 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+          animation-fill-mode: both;
+        }
+        
+        .grid > div:nth-child(1) { animation-delay: 0.05s; }
+        .grid > div:nth-child(2) { animation-delay: 0.1s; }
+        .grid > div:nth-child(3) { animation-delay: 0.15s; }
+        .grid > div:nth-child(4) { animation-delay: 0.2s; }
+        .grid > div:nth-child(n+5) { animation-delay: 0.25s; }
+        
+        @keyframes fadeInUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        
+        /* Smooth transitions for all interactive elements */
+        * {
+          transition-duration: 0.3s;
+          transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        /* Category button animations */
+        button {
+          position: relative;
+        }
+        
+        button::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: -100%;
+          width: 100%;
+          height: 100%;
+          background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+          transition: left 0.5s;
+          pointer-events: none;
+          border-radius: inherit;
+        }
+        
+        button:hover::before {
+          left: 100%;
+        }
+        
+        /* Prevent transition on transform for hover effects */
+        .card {
+          transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        
+        /* Search input focus effect */
+        input:focus {
+          box-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
+        }
+      `}</style>
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 relative">
         <ScrollToTopOnMount />
         
-        <div className="mb-8 md:mb-16 text-center md:text-left">
-          <h1 className={`text-4xl md:text-6xl font-black ${theme.textAccent} tracking-tight leading-tight mb-4 flex items-center justify-center md:justify-start gap-4`}>
-            {selectedCategory === 'All' ? 'The Collection' : selectedCategory}
-            {selectedCategory === 'All' && (
-              <img 
-                src="https://cdn-icons-png.flaticon.com/128/9198/9198132.png" 
-                alt="Collection Icon" 
-                className="w-10 h-10 md:w-16 md:h-16 object-contain collection-icon-animated animate-fade-in"
-              />
+        {/* Header Section */}
+        <div className="mb-12 shop-header">
+          <div className="flex items-center gap-4 mb-3">
+            <h1 className={`text-4xl md:text-5xl font-black text-slate-900 tracking-tight`}>
+              {selectedCategory === 'All' ? 'Catalog' : selectedCategory}
+            </h1>
+            {selectedCategory === ProductCategory.BEAUTY && (
+              <div className="animated-icon-container">
+                <style>{`
+                  @keyframes makeup-brush-motion {
+                    0% { 
+                      transform: translateX(-8px) translateY(-8px) rotate(-15deg) scale(1);
+                    }
+                    12% { 
+                      transform: translateX(-4px) translateY(-6px) rotate(-10deg) scale(1.05);
+                    }
+                    25% { 
+                      transform: translateX(0px) translateY(-4px) rotate(0deg) scale(1);
+                    }
+                    37% { 
+                      transform: translateX(4px) translateY(-2px) rotate(10deg) scale(1.05);
+                    }
+                    50% { 
+                      transform: translateX(8px) translateY(0px) rotate(15deg) scale(1);
+                    }
+                    62% { 
+                      transform: translateX(4px) translateY(4px) rotate(10deg) scale(1.05);
+                    }
+                    75% { 
+                      transform: translateX(-2px) translateY(6px) rotate(-5deg) scale(1);
+                    }
+                    87% { 
+                      transform: translateX(-6px) translateY(4px) rotate(-12deg) scale(1.05);
+                    }
+                    100% { 
+                      transform: translateX(-8px) translateY(-8px) rotate(-15deg) scale(1);
+                    }
+                  }
+                  
+                  @keyframes makeup-glow-pulse {
+                    0%, 100% { 
+                      filter: drop-shadow(0 0 8px rgba(236, 72, 153, 0.4)) drop-shadow(0 0 15px rgba(249, 115, 22, 0.2));
+                    }
+                    25% { 
+                      filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.6)) drop-shadow(0 0 20px rgba(249, 115, 22, 0.3));
+                    }
+                    50% { 
+                      filter: drop-shadow(0 0 16px rgba(236, 72, 153, 0.7)) drop-shadow(0 0 28px rgba(249, 115, 22, 0.4));
+                    }
+                    75% { 
+                      filter: drop-shadow(0 0 12px rgba(236, 72, 153, 0.6)) drop-shadow(0 0 20px rgba(249, 115, 22, 0.3));
+                    }
+                  }
+                  
+                  .makeup-icon-img {
+                    animation: makeup-brush-motion 4s cubic-bezier(0.44, 0.09, 0.56, 0.91) infinite, makeup-glow-pulse 4s ease-in-out infinite;
+                    width: 56px;
+                    height: 56px;
+                    object-fit: contain;
+                    transform-origin: center;
+                    will-change: transform, filter;
+                  }
+                `}</style>
+                <img 
+                  src="https://cdn-icons-png.flaticon.com/128/828/828437.png"
+                  alt="Makeup"
+                  className="makeup-icon-img"
+                />
+              </div>
             )}
-            {(selectedCategory === ProductCategory.WOMENS_WEAR || selectedCategory === ProductCategory.WOMENS_WATCHES) && (
-              <img 
-                src="https://cdn-icons-png.flaticon.com/128/8863/8863863.png" 
-                alt="Women's Icon" 
-                className="w-10 h-10 md:w-16 md:h-16 object-contain cursor-pointer womens-icon-animated animate-fade-in"
-              />
-            )}
-            {selectedCategory === ProductCategory.GROCERY && (
-              <img 
-                src="https://cdn-icons-png.flaticon.com/128/3514/3514211.png" 
-                alt="Grocery Icon" 
-                className="w-10 h-10 md:w-16 md:h-16 object-contain collection-icon-animated animate-fade-in"
-              />
-            )}
-          </h1>
-          <p className="text-slate-600 font-medium text-lg md:text-xl max-w-2xl">
-            Discover our meticulously selected {selectedCategory === 'All' ? 'inventory' : selectedCategory.toLowerCase()} for your lifestyle.
+          </div>
+          <p className="text-slate-600 font-semibold text-lg max-w-2xl">
+            Explore our premium collection of {selectedCategory === 'All' ? 'products' : selectedCategory.toLowerCase()}.
           </p>
         </div>
 
-        <div className="bg-white/70 backdrop-blur-xl p-3 md:p-6 rounded-3xl border border-white shadow-2xl shadow-indigo-100/20 mb-12 flex flex-col gap-6 sticky top-28 z-30 transition-all">
-          <div className="flex items-center gap-3 overflow-x-auto no-scrollbar py-1">
-            {categories.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`px-5 py-2.5 rounded-2xl text-xs md:text-sm font-black transition-all whitespace-nowrap border-2 ${
-                  selectedCategory === cat 
-                  ? `bg-slate-900 text-white border-slate-900 shadow-lg shadow-slate-200 scale-105` 
-                  : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:text-slate-900'
-                }`}
-              >
-                {cat === 'All' ? 'All' : (cat === ProductCategory.MOBILE ? 'Phones' : cat)}
-              </button>
-            ))}
+        {/* Filter & Search Section */}
+        <div className="shop-filters rounded-xl shadow-sm border border-slate-200 p-6 md:p-8 mb-12 sticky top-24 z-30">
+          {/* Category Filter */}
+          <div className="mb-6">
+            <h3 className="text-xs font-black text-slate-700 uppercase tracking-widest mb-4">Categories</h3>
+            <div className="flex items-center gap-3 overflow-x-auto no-scrollbar pb-2">
+              {categories.map(cat => (
+                <button
+                  key={cat}
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`px-4 py-2 rounded-lg text-xs md:text-sm font-bold whitespace-nowrap transition-all border ${
+                    selectedCategory === cat 
+                      ? `bg-indigo-600 text-white border-indigo-600 shadow-md` 
+                      : 'bg-gray-100 text-slate-700 border-gray-200 hover:bg-gray-200'
+                  }`}
+                >
+                  {cat === 'All' ? 'All' : (cat === ProductCategory.MOBILE ? 'Phones' : cat)}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-300 group-focus-within:text-indigo-500 transition-colors" size={20} />
+          {/* Search Bar */}
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
             <input 
               type="text"
-              placeholder="Search by name, category or specs..."
+              placeholder="Search products..."
               value={searchTerm}
               onFocus={() => setIsAutocompleteOpen(true)}
               onKeyDown={handleKeyDown}
@@ -264,17 +441,18 @@ const ShopPage: React.FC = () => {
                 setIsAutocompleteOpen(true);
                 setActiveIndex(-1);
               }}
-              className="w-full bg-slate-50/50 border-2 border-slate-100 rounded-2xl py-3.5 md:py-4 pl-12 pr-4 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-200 focus:bg-white outline-none transition-all font-bold text-slate-900 placeholder-slate-400 shadow-inner"
+              className="w-full bg-gray-100 border border-gray-300 rounded-lg py-3 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all font-semibold text-slate-900 placeholder-slate-500"
             />
           </div>
         </div>
 
+        {/* Products Grid */}
         {loading ? (
-          <SiteLoader message={`Filtering ${selectedCategory}...`} />
+          <SiteLoader message={`Loading ${selectedCategory}...`} />
         ) : filteredProducts.length > 0 ? (
-          <div className={`flex flex-wrap gap-8 justify-center items-start py-16 px-6 md:px-10 rounded-[2.5rem] border-3 ${theme.borderColor} ${theme.bgPattern} bg-white/95 backdrop-blur-xl shadow-2xl`}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 items-start shop-catalog">
             {filteredProducts.map(product => (
-              <div key={product.id} className="w-full sm:w-80 flex justify-center">
+              <div key={product.id} className="w-full">
                 <ExpandableProductCard 
                   product={product}
                 />
@@ -282,11 +460,16 @@ const ShopPage: React.FC = () => {
             ))}
           </div>
         ) : (
-          <div className="text-center py-32 bg-gray-50 border-2 border-dashed border-gray-100 rounded-[2.5rem]">
-            <Search size={48} className="text-gray-100 mx-auto mb-6" />
-            <h2 className="text-2xl font-black text-gray-900 mb-2 tracking-tighter">No Matches Found</h2>
-            <p className="text-gray-400 font-bold text-sm">We couldn't find any products matching "{searchTerm}".</p>
-            <button onClick={() => {setSearchTerm(''); setSelectedCategory('All');}} className="mt-6 text-indigo-600 font-black text-xs uppercase tracking-widest hover:underline">Reset Filters</button>
+          <div className="text-center py-24 bg-white rounded-xl border border-slate-200">
+            <Search size={48} className="text-slate-200 mx-auto mb-4" />
+            <h2 className="text-2xl font-black text-slate-900 mb-2">No Products Found</h2>
+            <p className="text-slate-600 font-semibold mb-6">We couldn't find any products matching your search.</p>
+            <button 
+              onClick={() => {setSearchTerm(''); setSelectedCategory('All');}} 
+              className="bg-indigo-600 text-white font-bold text-sm px-6 py-3 rounded-lg hover:bg-indigo-700 transition-all"
+            >
+              Clear Filters
+            </button>
           </div>
         )}
       </div>

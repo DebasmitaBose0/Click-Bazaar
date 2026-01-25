@@ -12,7 +12,7 @@ interface DBState {
 
 const INITIAL_STATE: DBState = {
   users: [
-    { id: '1', name: 'Admin User', email: 'admin@clickbazaar.com', role: UserRole.ADMIN, password: '[TEST_PLACEHOLDER]' },
+    { id: '1', name: 'Admin User', email: 'dbose272@gmail.com', role: UserRole.ADMIN, password: '[TEST_PLACEHOLDER]' },
     { id: '2', name: 'Test Customer', email: 'customer@test.com', role: UserRole.CUSTOMER, password: '[TEST_PLACEHOLDER]' }
   ],
   products: ([
@@ -52,11 +52,11 @@ const INITIAL_STATE: DBState = {
     { id: 'wwa5', name: 'Silver Bangle Watch', category: ProductCategory.WOMENS_WATCHES, price: 8900, stock: 20, description: 'Timepiece that doubles as a sophisticated jewelry piece.', image: 'https://waldorandco.com/cdn/shop/files/IMG_14627.jpg?v=1731600264&width=767' },
 
     // Electronics (9 Items)
-    { id: 'e1', name: 'Quantum Noise Cancelling Headphones', category: ProductCategory.ELECTRONICS, price: 18999, stock: 40, description: 'Industry-leading noise cancellation with 40h battery life.', image: 'https://inventstore.in/wp-content/uploads/2023/04/iPhone_13_Blue.webp' },
+    { id: 'e1', name: 'Quantum Noise Cancelling Headphones', category: ProductCategory.ELECTRONICS, price: 18999, stock: 40, description: 'Industry-leading noise cancellation with 40h battery life.', image: 'https://m.media-amazon.com/images/I/61tsQpAxchL._AC_UF1000,1000_QL80_.jpg' },
     { id: 'e2', name: 'Studio Hi-Fi Speaker', category: ProductCategory.ELECTRONICS, price: 12500, stock: 20, description: 'Room-filling audio with wooden cabinet design.', image: 'https://mixingmonster.com/wp-content/uploads/2024/11/blog-studio-gear-best-hifi-speakers-elac-bs2434-sb-carina.webp'},
     { id: 'e3', name: 'Mechanical RGB Keyboard', category: ProductCategory.ELECTRONICS, price: 8999, stock: 35, description: 'Cherry MX Blue switches with per-key lighting.', image: 'https://images.unsplash.com/photo-1511467687858-23d96c32e4ae?w=500&h=500&fit=crop' },
     { id: 'e4', name: 'Precision Wireless Mouse', category: ProductCategory.ELECTRONICS, price: 4500, stock: 50, description: 'Ergonomic design with 26k DPI optical sensor.', image: 'https://images.unsplash.com/photo-1527864550417-7fd91fc51a46?w=500&h=500&fit=crop' },
-    { id: 'e5', name: 'Ultra-Thin 4K Tablet', category: ProductCategory.ELECTRONICS, price: 45000, stock: 15, description: '12.9-inch OLED display with stylus support.', image: 'https://www.designinfo.in/wp-content/uploads/2023/01/Apple-iPhone-14-Pro-Mobile-Phone-493177786-i-1-1200Wx1200H-optimized.jpeg' },
+    { id: 'e5', name: 'Ultra-Thin 4K Tablet', category: ProductCategory.ELECTRONICS, price: 45000, stock: 15, description: '12.9-inch OLED display with stylus support.', image: 'https://image.made-in-china.com/202f0j00VcElhaWqYyUe/43-Inch-Super-Bezel-Ultra-Thin-4K-UHD-New-LCD-Digital-Signage-Wall-Mounted-with-Windows-10-Advertising-LCD-24-Inches-LCD-Monitor-for-Bus-LCD-Digital-Display.webp' },
     { id: 'e6', name: 'Mirrorless Pro Camera', category: ProductCategory.ELECTRONICS, price: 125000, stock: 10, description: 'Full-frame sensor with 4K 60fps video capabilities.', image: 'https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=500&h=500&fit=crop' },
     { id: 'e7', name: 'Curved Gaming Monitor', category: ProductCategory.ELECTRONICS, price: 32000, stock: 12, description: '34-inch ultrawide with 144Hz refresh rate.', image: 'https://images.unsplash.com/photo-1527443224154-c4a3942d3acf?w=500&h=500&fit=crop' },
     { id: 'e9', name: 'Smart Home Soundbar', category: ProductCategory.ELECTRONICS, price: 21000, stock: 18, description: 'Dolby Atmos support with wireless subwoofer.', image: 'https://static.skyassets.com/contentstack/assets/blt143e20b03d72047e/blt03e263d18eb1b8b9/68c0ca8d53f9157237149f80/2025_Q3_Sep_Apple_Launch_Keynote_Phase_1_Brand_Hub_Apple_at_Sky_Pro_and_Max_Product_Card._(1).png' },

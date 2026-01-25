@@ -14,6 +14,8 @@ const SERVER_DB = {
   sessions: new Map<string, any>(), // JWT-like sessions
   orders: new Map<string, Order>(),
   trackingData: new Map<string, any>(),
+  // simple newsletter subscriber store (email set)
+  newsletterSubscribers: new Set<string>(),
 };
 
 // Warehouse Location: Barrackpore, West Bengal, India
@@ -290,4 +292,15 @@ export const serverAPI = {
   getWarehouseLocation: () => WAREHOUSE_LOCATION,
 
   getDeliveryZones: () => DELIVERY_ZONES,
+
+  // Simple newsletter subscribe simulation
+  subscribe: async (email: string): Promise<void> => {
+    const normalized = (email || '').trim().toLowerCase();
+    const rx = /^\S+@\S+\.\S+$/;
+    if (!rx.test(normalized)) throw new Error('Invalid email');
+    if (SERVER_DB.newsletterSubscribers.has(normalized)) throw new Error('Already subscribed');
+    SERVER_DB.newsletterSubscribers.add(normalized);
+    // emulate async processing delay
+    await new Promise(res => setTimeout(res, 400));
+  },
 };

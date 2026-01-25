@@ -1,7 +1,0 @@
-{
-  "name": "ClickBazaar",
-  "description": "A high-performance, full-featured e-commerce platform with multi-category shopping, secure authentication, and a robust administrative control panel. Version 1.0.",
-  "requestFramePermissions": [
-    "camera"
-  ]
-}

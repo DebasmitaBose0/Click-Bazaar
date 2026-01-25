@@ -6,6 +6,7 @@ import {
   LogOut, Star, Clock, MapPin, Loader2, ArrowRight
 } from 'lucide-react';
 import { AppContext, formatCurrency, CategoryBackground } from '../shared';
+import CinematicToggle from '../components/CinematicToggle';
 import { api } from '../services/api';
 import { Order, OrderStatus, ProductCategory } from '../types';
 
@@ -161,6 +162,12 @@ const ProfilePage: React.FC = () => {
                    <p className="text-gray-400 font-black uppercase tracking-widest text-[8px] md:text-sm">No recent transactions</p>
                 </div>
               )}
+            </div>
+
+            <div className="mt-8 bg-white border border-gray-100 rounded-2xl p-6 md:p-8 shadow-sm">
+              <h3 className="text-lg font-bold">Preferences</h3>
+              <p className="text-sm text-gray-500 mb-4">Control site motion and cinematic effects. Toggle off to reduce animations and improve focus.</p>
+              <CinematicToggle />
             </div>
           </div>
         </div>

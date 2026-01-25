@@ -108,6 +108,51 @@ export const api = {
     return getDB().currentUser;
   },
 
+  // Subscribe to newsletter (client + fallback)
+  subscribe: async (email: string): Promise<void> => {
+    const normalized = (email || '').trim().toLowerCase();
+    const rx = /^\S+@\S+\.\S+$/;
+    if (!rx.test(normalized)) throw new Error('Invalid email');
+
+    // 1) If a real backend endpoint is configured (recommended), POST to it first.
+    const endpoint = (typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_SUBSCRIBE_ENDPOINT : (process.env as any).VITE_SUBSCRIBE_ENDPOINT) || '';
+    if (endpoint) {
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: normalized })
+        });
+        if (!res.ok) {
+          const body = await res.text();
+          throw new Error(`Subscribe endpoint error: ${res.status} ${body}`);
+        }
+        return;
+      } catch (err) {
+        console.warn('External subscribe endpoint failed, falling back to internal handlers', err);
+        // fallthrough to serverAPI/local fallback
+      }
+    }
+
+    // 2) Prefer in-app serverAPI (demo server simulation)
+    try {
+      if (serverAPI && typeof (serverAPI as any).subscribe === 'function') {
+        await (serverAPI as any).subscribe(normalized);
+        return;
+      }
+    } catch (err) {
+      console.warn('server subscribe failed, falling back to local storage', err);
+    }
+
+    // 3) Local fallback: store in a dedicated localStorage key
+    await simulateDelay();
+    const KEY = 'clickbazaar_newsletter_v1';
+    const list: string[] = JSON.parse(localStorage.getItem(KEY) || '[]');
+    if (list.includes(normalized)) throw new Error('Already subscribed');
+    list.push(normalized);
+    localStorage.setItem(KEY, JSON.stringify(list));
+  },
+
   // ===== PRODUCTS =====
   
   getProducts: async (category?: ProductCategory): Promise<Product[]> => {
