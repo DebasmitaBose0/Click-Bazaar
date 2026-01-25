@@ -565,16 +565,16 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
     min-height: clamp(160px, 28vh, 320px) !important;
   }
 
-  /* Reduce very large border-radiuses on small screens for better fit */
+  /* Reduce very large border-radiuses on small screens but preserve brand curvature */
   [class*="rounded-[2rem]"],
   [class*="rounded-[3rem]"] {
-    border-radius: 1rem !important;
+    border-radius: 1.5rem !important;
   }
 
-  /* Reduce oversized paddings used by hero/cinematic layouts */
+  /* Reduce oversized paddings used by hero/cinematic layouts (but keep comfortable spacing) */
   .hero-section, .cinematic-page, .hero, .hero-section .flex {
-    padding-top: clamp(12px, 5vw, 36px) !important;
-    padding-bottom: clamp(12px, 5vw, 36px) !important;
+    padding-top: clamp(18px, 6vw, 48px) !important;
+    padding-bottom: clamp(18px, 6vw, 48px) !important;
   }
 
   /* Make focus rings on large, non-interactive blocks invisible (they are noisy on mobile)
@@ -584,21 +584,32 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
     box-shadow: none !important;
   }
 
-  /* Slightly reduce heavy shadows and background bleed on mobile for performance */
+  /* Decorative elements: retain visual richness on mobile but reduce intensity for performance */
   .beauty-animated-decor .beauty-blob,
   .icon-float,
   .icon-float-fast,
   .icon-float-slow {
-    filter: blur(18px) !important;
-    opacity: 0.9 !important;
-    animation: none !important;
+    /* keep soft blur but less aggressive so highlight/shine remain visible */
+    filter: blur(12px) !important;
+    opacity: 0.98 !important;
+    /* reduce animation intensity rather than disabling entirely */
+    animation-duration: 10s !important;
+    animation-timing-function: ease-in-out !important;
+    animation-iteration-count: infinite !important;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .beauty-animated-decor .beauty-blob,
+    .icon-float,
+    .icon-float-fast,
+    .icon-float-slow {
+      animation: none !important;
+    }
   }
 
-  /* Target only problematic full-width anchors (promo ticker, bare layout links)
-     — do NOT strip styling from button-like anchors (.btn, .btn-gradient) which must
-     retain their padding/background. This preserves the original visual design
-     while preventing empty/full-width anchors from overflowing on mobile. */
-  .promo-ticker a, .mobile-nav-scroll a, .category-bg-container > a:only-child {
+  /* Target only problematic bare anchors — do NOT touch button-like anchors */
+  .promo-ticker a:not(.btn):not(.btn-gradient):not(.product-cta),
+  .mobile-nav-scroll a:not(.btn):not(.btn-gradient):not(.product-cta),
+  .category-bg-container > a:only-child:not(.btn):not(.btn-gradient):not(.product-cta) {
     display: inline-block !important;
     width: auto !important;
     padding: 0 !important;
@@ -626,7 +637,7 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   /* Soften radius reduction so design remains rounded but not oversized */
   [class*="rounded-[2rem]"],
   [class*="rounded-[3rem]"] {
-    border-radius: 1.25rem !important;
+    border-radius: 1.5rem !important;
   }
 
   /* Tame excessive gaps on mobile so sections fit comfortably in viewport */
@@ -636,7 +647,10 @@ a:focus-visible, button:focus-visible, [role="button"]:focus-visible {
   .hero-section .btn, .hero-section .inline-block { min-height: 44px !important; padding: 10px 16px !important; }
 
   /* Keep small focus indicator for interactive elements, remove large UA rings */
-  a:focus-visible, button:focus-visible { box-shadow: 0 0 0 4px rgba(79,70,229,0.12); outline: none; }
+  a:focus { outline: none !important; box-shadow: none !important; }
+  a:focus-visible, button:focus-visible { box-shadow: 0 0 0 6px rgba(79,70,229,0.14); outline: none; }
+  /* Ensure touch/click does not trigger large native rings on some browsers */
+  a:focus:not(:focus-visible), button:focus:not(:focus-visible) { outline: none !important; box-shadow: none !important; }
 
 }
 
